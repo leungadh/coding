@@ -15,8 +15,8 @@
         ,"post1": {
             "title": "Notebook to validate Gradient setup",
             "content": "import fastai fastai.__version__ . &#39;2.1.5&#39; . !nvidia-smi . Sat Jul 3 22:40:46 2021 +--+ | NVIDIA-SMI 450.36.06 Driver Version: 450.36.06 CUDA Version: 11.0 | |-+-+-+ | GPU Name Persistence-M| Bus-Id Disp.A | Volatile Uncorr. ECC | | Fan Temp Perf Pwr:Usage/Cap| Memory-Usage | GPU-Util Compute M. | | | | MIG M. | |===============================+======================+======================| | 0 Quadro P4000 On | 00000000:00:05.0 Off | N/A | | 46% 41C P0 34W / 105W | 853MiB / 8119MiB | 35% Default | | | | N/A | +-+-+-+ +--+ | Processes: | | GPU GI CI PID Type Process name GPU Memory | | ID ID Usage | |=============================================================================| +--+ .",
-            "url": "https://leungadh.github.io/coding/2022/03/22/validate-gradient-setup.html",
-            "relUrl": "/2022/03/22/validate-gradient-setup.html",
+            "url": "https://leungadh.github.io/coding/colab/setup/2022/03/22/validate-gradient-setup.html",
+            "relUrl": "/colab/setup/2022/03/22/validate-gradient-setup.html",
             "date": " • Mar 22, 2022"
         }
         
