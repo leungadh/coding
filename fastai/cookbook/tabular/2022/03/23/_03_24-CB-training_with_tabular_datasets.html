@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>FastAI Cookbook Ch.3.1. Training a model with tabular datasets in fast.ai | My machine learning blog</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="FastAI Cookbook Ch.3.1. Training a model with tabular datasets in fast.ai" />
+<meta name="author" content="Mark Ryan" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Example of training a model with a tabular dataset in fast.ai The example shown here is adapted from the paper by Howard and Gugger" />
+<meta property="og:description" content="Example of training a model with a tabular dataset in fast.ai The example shown here is adapted from the paper by Howard and Gugger" />
+<link rel="canonical" href="https://leungadh.github.io/coding/fastai/cookbook/tabular/2022/03/23/_03_24-CB-training_with_tabular_datasets.html" />
+<meta property="og:url" content="https://leungadh.github.io/coding/fastai/cookbook/tabular/2022/03/23/_03_24-CB-training_with_tabular_datasets.html" />
+<meta property="og:site_name" content="My machine learning blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-03-23T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="FastAI Cookbook Ch.3.1. Training a model with tabular datasets in fast.ai" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Mark Ryan"},"dateModified":"2022-03-23T00:00:00-05:00","datePublished":"2022-03-23T00:00:00-05:00","description":"Example of training a model with a tabular dataset in fast.ai The example shown here is adapted from the paper by Howard and Gugger","headline":"FastAI Cookbook Ch.3.1. Training a model with tabular datasets in fast.ai","mainEntityOfPage":{"@type":"WebPage","@id":"https://leungadh.github.io/coding/fastai/cookbook/tabular/2022/03/23/_03_24-CB-training_with_tabular_datasets.html"},"url":"https://leungadh.github.io/coding/fastai/cookbook/tabular/2022/03/23/_03_24-CB-training_with_tabular_datasets.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/coding/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://leungadh.github.io/coding/feed.xml" title="My machine learning blog" /><link rel="shortcut icon" type="image/x-icon" href="/coding/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/coding/">My machine learning blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/coding/about/">About Me</a><a class="page-link" href="/coding/search/">Search</a><a class="page-link" href="/coding/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">FastAI Cookbook Ch.3.1. Training a model with tabular datasets in fast.ai</h1><p class="page-description">Example of training a model with a tabular dataset in fast.ai The example shown here is adapted from the paper by <a href='https://arxiv.org/pdf/2002.04688.pdf'>Howard and Gugger</a></p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-03-23T00:00:00-05:00" itemprop="datePublished">
+        Mar 23, 2022
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">Mark Ryan</span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      6 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/coding/categories/#fastai">fastai</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/coding/categories/#cookbook">cookbook</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/coding/categories/#tabular">tabular</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/leungadh/coding/tree/master/_notebooks/2022_03_24-CB-training_with_tabular_datasets.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/coding/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/leungadh/coding/master?filepath=_notebooks%2F2022_03_24-CB-training_with_tabular_datasets.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/coding/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/leungadh/coding/blob/master/_notebooks/2022_03_24-CB-training_with_tabular_datasets.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/coding/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Fleungadh%2Fcoding%2Fblob%2Fmaster%2F_notebooks%2F2022_03_24-CB-training_with_tabular_datasets.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/coding/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h1"><a href="#Prepare-the-notebook-and-ingest-the-dataset">Prepare the notebook and ingest the dataset </a></li>
+<li class="toc-entry toc-h1"><a href="#Define-transforms,-dependent-variable,-continuous-and-categorical-columns">Define transforms, dependent variable, continuous and categorical columns </a></li>
+<li class="toc-entry toc-h1"><a href="#Define-TabularDataLoaders-object">Define TabularDataLoaders object </a></li>
+<li class="toc-entry toc-h1"><a href="#Define-and-train-model">Define and train model </a></li>
+<li class="toc-entry toc-h1"><a href="#Examine-the-structure-of-the-trained-model-structure">Examine the structure of the trained model structure </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022_03_24-CB-training_with_tabular_datasets.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Prepare-the-notebook-and-ingest-the-dataset">
+<a class="anchor" href="#Prepare-the-notebook-and-ingest-the-dataset" aria-hidden="true"><span class="octicon octicon-link"></span></a>Prepare the notebook and ingest the dataset<a class="anchor-link" href="#Prepare-the-notebook-and-ingest-the-dataset"> </a>
+</h1>
+<p>The first section of this notebook is identical to the chapter 2 notebook for examining tabular curated datasets: <a href="https://github.com/PacktPublishing/Deep-Learning-with-fastai-Cookbook/blob/main/ch2/examining_tabular_datasets.ipynb">https://github.com/PacktPublishing/Deep-Learning-with-fastai-Cookbook/blob/main/ch2/examining_tabular_datasets.ipynb</a></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>pip install -Uqq fastbook
+<span class="kn">import</span> <span class="nn">fastbook</span>
+<span class="kn">from</span> <span class="nn">fastbook</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">fastai.tabular.all</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>     |████████████████████████████████| 720 kB 5.2 MB/s 
+     |████████████████████████████████| 1.2 MB 35.8 MB/s 
+     |████████████████████████████████| 48 kB 4.4 MB/s 
+     |████████████████████████████████| 189 kB 44.6 MB/s 
+     |████████████████████████████████| 55 kB 3.5 MB/s 
+     |████████████████████████████████| 51 kB 303 kB/s 
+     |████████████████████████████████| 561 kB 38.6 MB/s 
+     |████████████████████████████████| 130 kB 45.8 MB/s 
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fastbook</span><span class="o">.</span><span class="n">setup_book</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Mounted at /content/gdrive
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">path</span> <span class="o">=</span> <span class="n">untar_data</span><span class="p">(</span><span class="n">URLs</span><span class="o">.</span><span class="n">ADULT_SAMPLE</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+<style>
+    /* Turns off some styling */
+    progress {
+        /* gets rid of default border in Firefox and Opera. */
+        border: none;
+        /* Needs to be in here for Safari polyfill so background images work as expected. */
+        background-size: auto;
+    }
+    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+        background: #F44336;
+    }
+</style>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+    <div>
+      <progress value="974848" class="" max="968212" style="width:300px; height:20px; vertical-align: middle;"></progress>
+      100.69% [974848/968212 00:00&lt;00:00]
+    </div>
+    
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">path</span><span class="o">.</span><span class="n">ls</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(#3) [Path('/root/.fastai/data/adult_sample/export.pkl'),Path('/root/.fastai/data/adult_sample/adult.csv'),Path('/root/.fastai/data/adult_sample/models')]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="o">/</span><span class="s1">'adult.csv'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+
+  <div id="df-ce8dc0e7-b29d-4e19-a74e-9ff4b2a10d70">
+    <div class="colab-df-container">
+      <div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>workclass</th>
+      <th>fnlwgt</th>
+      <th>education</th>
+      <th>education-num</th>
+      <th>marital-status</th>
+      <th>occupation</th>
+      <th>relationship</th>
+      <th>race</th>
+      <th>sex</th>
+      <th>capital-gain</th>
+      <th>capital-loss</th>
+      <th>hours-per-week</th>
+      <th>native-country</th>
+      <th>salary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>49</td>
+      <td>Private</td>
+      <td>101320</td>
+      <td>Assoc-acdm</td>
+      <td>12.0</td>
+      <td>Married-civ-spouse</td>
+      <td>NaN</td>
+      <td>Wife</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>0</td>
+      <td>1902</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&gt;=50k</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>44</td>
+      <td>Private</td>
+      <td>236746</td>
+      <td>Masters</td>
+      <td>14.0</td>
+      <td>Divorced</td>
+      <td>Exec-managerial</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>10520</td>
+      <td>0</td>
+      <td>45</td>
+      <td>United-States</td>
+      <td>&gt;=50k</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>38</td>
+      <td>Private</td>
+      <td>96185</td>
+      <td>HS-grad</td>
+      <td>NaN</td>
+      <td>Divorced</td>
+      <td>NaN</td>
+      <td>Unmarried</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>0</td>
+      <td>0</td>
+      <td>32</td>
+      <td>United-States</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>38</td>
+      <td>Self-emp-inc</td>
+      <td>112847</td>
+      <td>Prof-school</td>
+      <td>15.0</td>
+      <td>Married-civ-spouse</td>
+      <td>Prof-specialty</td>
+      <td>Husband</td>
+      <td>Asian-Pac-Islander</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&gt;=50k</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>42</td>
+      <td>Self-emp-not-inc</td>
+      <td>82297</td>
+      <td>7th-8th</td>
+      <td>NaN</td>
+      <td>Married-civ-spouse</td>
+      <td>Other-service</td>
+      <td>Wife</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>0</td>
+      <td>0</td>
+      <td>50</td>
+      <td>United-States</td>
+      <td>&lt;50k</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+      <button class="colab-df-convert" onclick="convertToInteractive('df-ce8dc0e7-b29d-4e19-a74e-9ff4b2a10d70')" title="Convert this dataframe to an interactive table." style="display:none;">
+        
+  &lt;svg xmlns="http://www.w3.org/2000/svg" height="24px"viewBox="0 0 24 24"
+       width="24px"&gt;
+    <path d="M0 0h24v24H0V0z" fill="none"></path>
+    <path d="M18.56 5.44l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94zm-11 1L8.5 8.5l.94-2.06 2.06-.94-2.06-.94L8.5 2.5l-.94 2.06-2.06.94zm10 10l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94z"></path><path d="M17.41 7.96l-1.37-1.37c-.4-.4-.92-.59-1.43-.59-.52 0-1.04.2-1.43.59L10.3 9.45l-7.72 7.72c-.78.78-.78 2.05 0 2.83L4 21.41c.39.39.9.59 1.41.59.51 0 1.02-.2 1.41-.59l7.78-7.78 2.81-2.81c.8-.78.8-2.07 0-2.86zM5.41 20L4 18.59l7.72-7.72 1.47 1.35L5.41 20z"></path>
+  &lt;/svg&gt;
+      </button>
+      
+  <style>
+    .colab-df-container {
+      display:flex;
+      flex-wrap:wrap;
+      gap: 12px;
+    }
+
+    .colab-df-convert {
+      background-color: #E8F0FE;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      fill: #1967D2;
+      height: 32px;
+      padding: 0 0 0 0;
+      width: 32px;
+    }
+
+    .colab-df-convert:hover {
+      background-color: #E2EBFA;
+      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
+      fill: #174EA6;
+    }
+
+    [theme=dark] .colab-df-convert {
+      background-color: #3B4455;
+      fill: #D2E3FC;
+    }
+
+    [theme=dark] .colab-df-convert:hover {
+      background-color: #434B5C;
+      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
+      fill: #FFFFFF;
+    }
+  </style>
+
+      <script>
+        const buttonEl =
+          document.querySelector('#df-ce8dc0e7-b29d-4e19-a74e-9ff4b2a10d70 button.colab-df-convert');
+        buttonEl.style.display =
+          google.colab.kernel.accessAllowed ? 'block' : 'none';
+
+        async function convertToInteractive(key) {
+          const element = document.querySelector('#df-ce8dc0e7-b29d-4e19-a74e-9ff4b2a10d70');
+          const dataTable =
+            await google.colab.kernel.invokeFunction('convertToInteractive',
+                                                     [key], {});
+          if (!dataTable) return;
+
+          const docLinkHtml = 'Like what you see? Visit the ' +
+            '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
+            + ' to learn more about interactive tables.';
+          element.innerHTML = '';
+          dataTable['output_type'] = 'display_data';
+          await google.colab.output.renderOutput(dataTable, element);
+          const docLink = document.createElement('div');
+          docLink.innerHTML = docLinkHtml;
+          element.appendChild(docLink);
+        }
+      </script>
+    </div>
+  </div>
+  
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(32561, 15)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>age                  73
+workclass             9
+fnlwgt            21648
+education            16
+education-num        16
+marital-status        7
+occupation           15
+relationship          6
+race                  5
+sex                   2
+capital-gain        119
+capital-loss         92
+hours-per-week       94
+native-country       42
+salary                2
+dtype: int64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>age                 0
+workclass           0
+fnlwgt              0
+education           0
+education-num     487
+marital-status      0
+occupation        512
+relationship        0
+race                0
+sex                 0
+capital-gain        0
+capital-loss        0
+hours-per-week      0
+native-country      0
+salary              0
+dtype: int64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># streetcarjan2014[streetcarjan2014.Location == "King and Shaw"].Route</span>
+<span class="n">df_young</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">age</span> <span class="o">&lt;=</span> <span class="mi">40</span><span class="p">]</span>
+<span class="n">df_young</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+
+  <div id="df-0d3204cc-731e-4e5f-bf20-1a67cee326ea">
+    <div class="colab-df-container">
+      <div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>age</th>
+      <th>workclass</th>
+      <th>fnlwgt</th>
+      <th>education</th>
+      <th>education-num</th>
+      <th>marital-status</th>
+      <th>occupation</th>
+      <th>relationship</th>
+      <th>race</th>
+      <th>sex</th>
+      <th>capital-gain</th>
+      <th>capital-loss</th>
+      <th>hours-per-week</th>
+      <th>native-country</th>
+      <th>salary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>2</th>
+      <td>38</td>
+      <td>Private</td>
+      <td>96185</td>
+      <td>HS-grad</td>
+      <td>NaN</td>
+      <td>Divorced</td>
+      <td>NaN</td>
+      <td>Unmarried</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>0</td>
+      <td>0</td>
+      <td>32</td>
+      <td>United-States</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>38</td>
+      <td>Self-emp-inc</td>
+      <td>112847</td>
+      <td>Prof-school</td>
+      <td>15.0</td>
+      <td>Married-civ-spouse</td>
+      <td>Prof-specialty</td>
+      <td>Husband</td>
+      <td>Asian-Pac-Islander</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&gt;=50k</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>20</td>
+      <td>Private</td>
+      <td>63210</td>
+      <td>HS-grad</td>
+      <td>9.0</td>
+      <td>Never-married</td>
+      <td>Handlers-cleaners</td>
+      <td>Own-child</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>15</td>
+      <td>United-States</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>37</td>
+      <td>Private</td>
+      <td>138940</td>
+      <td>11th</td>
+      <td>7.0</td>
+      <td>Married-civ-spouse</td>
+      <td>NaN</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>0</td>
+      <td>0</td>
+      <td>40</td>
+      <td>United-States</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>36</td>
+      <td>Self-emp-inc</td>
+      <td>216711</td>
+      <td>HS-grad</td>
+      <td>NaN</td>
+      <td>Married-civ-spouse</td>
+      <td>NaN</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>99999</td>
+      <td>0</td>
+      <td>50</td>
+      <td>?</td>
+      <td>&gt;=50k</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+      <button class="colab-df-convert" onclick="convertToInteractive('df-0d3204cc-731e-4e5f-bf20-1a67cee326ea')" title="Convert this dataframe to an interactive table." style="display:none;">
+        
+  &lt;svg xmlns="http://www.w3.org/2000/svg" height="24px"viewBox="0 0 24 24"
+       width="24px"&gt;
+    <path d="M0 0h24v24H0V0z" fill="none"></path>
+    <path d="M18.56 5.44l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94zm-11 1L8.5 8.5l.94-2.06 2.06-.94-2.06-.94L8.5 2.5l-.94 2.06-2.06.94zm10 10l.94 2.06.94-2.06 2.06-.94-2.06-.94-.94-2.06-.94 2.06-2.06.94z"></path><path d="M17.41 7.96l-1.37-1.37c-.4-.4-.92-.59-1.43-.59-.52 0-1.04.2-1.43.59L10.3 9.45l-7.72 7.72c-.78.78-.78 2.05 0 2.83L4 21.41c.39.39.9.59 1.41.59.51 0 1.02-.2 1.41-.59l7.78-7.78 2.81-2.81c.8-.78.8-2.07 0-2.86zM5.41 20L4 18.59l7.72-7.72 1.47 1.35L5.41 20z"></path>
+  &lt;/svg&gt;
+      </button>
+      
+  <style>
+    .colab-df-container {
+      display:flex;
+      flex-wrap:wrap;
+      gap: 12px;
+    }
+
+    .colab-df-convert {
+      background-color: #E8F0FE;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      fill: #1967D2;
+      height: 32px;
+      padding: 0 0 0 0;
+      width: 32px;
+    }
+
+    .colab-df-convert:hover {
+      background-color: #E2EBFA;
+      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
+      fill: #174EA6;
+    }
+
+    [theme=dark] .colab-df-convert {
+      background-color: #3B4455;
+      fill: #D2E3FC;
+    }
+
+    [theme=dark] .colab-df-convert:hover {
+      background-color: #434B5C;
+      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
+      fill: #FFFFFF;
+    }
+  </style>
+
+      <script>
+        const buttonEl =
+          document.querySelector('#df-0d3204cc-731e-4e5f-bf20-1a67cee326ea button.colab-df-convert');
+        buttonEl.style.display =
+          google.colab.kernel.accessAllowed ? 'block' : 'none';
+
+        async function convertToInteractive(key) {
+          const element = document.querySelector('#df-0d3204cc-731e-4e5f-bf20-1a67cee326ea');
+          const dataTable =
+            await google.colab.kernel.invokeFunction('convertToInteractive',
+                                                     [key], {});
+          if (!dataTable) return;
+
+          const docLinkHtml = 'Like what you see? Visit the ' +
+            '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
+            + ' to learn more about interactive tables.';
+          element.innerHTML = '';
+          dataTable['output_type'] = 'display_data';
+          await google.colab.output.renderOutput(dataTable, element);
+          const docLink = document.createElement('div');
+          docLink.innerHTML = docLinkHtml;
+          element.appendChild(docLink);
+        }
+      </script>
+    </div>
+  </div>
+  
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Define-transforms,-dependent-variable,-continuous-and-categorical-columns">
+<a class="anchor" href="#Define-transforms,-dependent-variable,-continuous-and-categorical-columns" aria-hidden="true"><span class="octicon octicon-link"></span></a>Define transforms, dependent variable, continuous and categorical columns<a class="anchor-link" href="#Define-transforms,-dependent-variable,-continuous-and-categorical-columns"> </a>
+</h1>
+<p>In this section we defined the transforms that will be applied to the dataset along with the target, continuous and categorical columns</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">procs</span> <span class="o">=</span> <span class="p">[</span><span class="n">FillMissing</span><span class="p">,</span><span class="n">Categorify</span><span class="p">]</span>
+<span class="c1"># define the dependent variable (y value)</span>
+<span class="n">dep_var</span> <span class="o">=</span> <span class="s1">'salary'</span>
+<span class="c1"># define columns that are continuous / categorical</span>
+<span class="n">cont</span><span class="p">,</span><span class="n">cat</span> <span class="o">=</span> <span class="n">cont_cat_split</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dep_var</span><span class="o">=</span><span class="n">dep_var</span><span class="p">)</span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">cont</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>['age',
+ 'fnlwgt',
+ 'education-num',
+ 'capital-gain',
+ 'capital-loss',
+ 'hours-per-week']</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">cat</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>['workclass',
+ 'education',
+ 'marital-status',
+ 'occupation',
+ 'relationship',
+ 'race',
+ 'sex',
+ 'native-country']</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Define-TabularDataLoaders-object">
+<a class="anchor" href="#Define-TabularDataLoaders-object" aria-hidden="true"><span class="octicon octicon-link"></span></a>Define TabularDataLoaders object<a class="anchor-link" href="#Define-TabularDataLoaders-object"> </a>
+</h1>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># valid_idx: the indices to use for the validation set</span>
+<span class="n">dls</span><span class="o">=</span><span class="n">TabularDataLoaders</span><span class="o">.</span><span class="n">from_df</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">path</span><span class="p">,</span><span class="n">procs</span><span class="o">=</span> <span class="n">procs</span><span class="p">,</span> 
+                               <span class="n">cat_names</span><span class="o">=</span> <span class="n">cat</span><span class="p">,</span> <span class="n">cont_names</span> <span class="o">=</span> <span class="n">cont</span><span class="p">,</span> <span class="n">y_names</span> <span class="o">=</span> <span class="n">dep_var</span><span class="p">,</span> <span class="n">valid_idx</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span><span class="mi">1260</span><span class="p">)),</span> <span class="n">bs</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+                               
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dls</span><span class="o">.</span><span class="n">show_batch</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>workclass</th>
+      <th>education</th>
+      <th>marital-status</th>
+      <th>occupation</th>
+      <th>relationship</th>
+      <th>race</th>
+      <th>sex</th>
+      <th>native-country</th>
+      <th>education-num_na</th>
+      <th>age</th>
+      <th>fnlwgt</th>
+      <th>education-num</th>
+      <th>capital-gain</th>
+      <th>capital-loss</th>
+      <th>hours-per-week</th>
+      <th>salary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Private</td>
+      <td>HS-grad</td>
+      <td>Never-married</td>
+      <td>Handlers-cleaners</td>
+      <td>Own-child</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>Portugal</td>
+      <td>False</td>
+      <td>22.0</td>
+      <td>162667.0</td>
+      <td>9.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>50.0</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Local-gov</td>
+      <td>HS-grad</td>
+      <td>Divorced</td>
+      <td>Protective-serv</td>
+      <td>Unmarried</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>United-States</td>
+      <td>False</td>
+      <td>43.0</td>
+      <td>186995.0</td>
+      <td>9.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>40.0</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Self-emp-not-inc</td>
+      <td>Some-college</td>
+      <td>Never-married</td>
+      <td>Craft-repair</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>United-States</td>
+      <td>False</td>
+      <td>18.0</td>
+      <td>42857.0</td>
+      <td>10.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>35.0</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Private</td>
+      <td>HS-grad</td>
+      <td>Never-married</td>
+      <td>Other-service</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>United-States</td>
+      <td>False</td>
+      <td>40.0</td>
+      <td>209040.0</td>
+      <td>9.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>40.0</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Private</td>
+      <td>Bachelors</td>
+      <td>Divorced</td>
+      <td>Adm-clerical</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Female</td>
+      <td>United-States</td>
+      <td>False</td>
+      <td>50.0</td>
+      <td>77905.0</td>
+      <td>13.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>8.0</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>?</td>
+      <td>Prof-school</td>
+      <td>Married-civ-spouse</td>
+      <td>?</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>United-States</td>
+      <td>False</td>
+      <td>63.0</td>
+      <td>247986.0</td>
+      <td>15.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>30.0</td>
+      <td>&gt;=50k</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Private</td>
+      <td>12th</td>
+      <td>Never-married</td>
+      <td>Sales</td>
+      <td>Own-child</td>
+      <td>Black</td>
+      <td>Female</td>
+      <td>United-States</td>
+      <td>False</td>
+      <td>18.0</td>
+      <td>311795.0</td>
+      <td>8.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>20.0</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Local-gov</td>
+      <td>Masters</td>
+      <td>Married-civ-spouse</td>
+      <td>Prof-specialty</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>United-States</td>
+      <td>False</td>
+      <td>43.0</td>
+      <td>174395.0</td>
+      <td>14.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>50.0</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Self-emp-inc</td>
+      <td>HS-grad</td>
+      <td>Never-married</td>
+      <td>Sales</td>
+      <td>Not-in-family</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>United-States</td>
+      <td>False</td>
+      <td>58.0</td>
+      <td>190541.0</td>
+      <td>9.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>47.0</td>
+      <td>&lt;50k</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Private</td>
+      <td>HS-grad</td>
+      <td>Married-civ-spouse</td>
+      <td>Other-service</td>
+      <td>Husband</td>
+      <td>White</td>
+      <td>Male</td>
+      <td>?</td>
+      <td>False</td>
+      <td>34.0</td>
+      <td>609789.0</td>
+      <td>9.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>30.0</td>
+      <td>&lt;50k</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Define-and-train-model">
+<a class="anchor" href="#Define-and-train-model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Define and train model<a class="anchor-link" href="#Define-and-train-model"> </a>
+</h1>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%time</span>
+<span class="n">learn</span> <span class="o">=</span> <span class="n">tabular_learner</span><span class="p">(</span><span class="n">dls</span><span class="p">,</span><span class="n">layers</span><span class="o">=</span><span class="p">[</span><span class="mi">200</span><span class="p">,</span><span class="mi">100</span><span class="p">],</span> <span class="n">metrics</span><span class="o">=</span><span class="n">accuracy</span><span class="p">)</span>
+<span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+<style>
+    /* Turns off some styling */
+    progress {
+        /* gets rid of default border in Firefox and Opera. */
+        border: none;
+        /* Needs to be in here for Safari polyfill so background images work as expected. */
+        background-size: auto;
+    }
+    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+        background: #F44336;
+    }
+</style>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>epoch</th>
+      <th>train_loss</th>
+      <th>valid_loss</th>
+      <th>accuracy</th>
+      <th>time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>0.341057</td>
+      <td>0.362043</td>
+      <td>0.817797</td>
+      <td>00:07</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>0.327887</td>
+      <td>0.337167</td>
+      <td>0.843220</td>
+      <td>00:06</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>0.305436</td>
+      <td>0.336424</td>
+      <td>0.847458</td>
+      <td>00:07</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>CPU times: user 22.7 s, sys: 1.37 s, total: 24.1 s
+Wall time: 31.1 s
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">recorder</span><span class="o">.</span><span class="n">plot_loss</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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%0A">
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">show_results</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+<style>
+    /* Turns off some styling */
+    progress {
+        /* gets rid of default border in Firefox and Opera. */
+        border: none;
+        /* Needs to be in here for Safari polyfill so background images work as expected. */
+        background-size: auto;
+    }
+    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+        background: #F44336;
+    }
+</style>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>workclass</th>
+      <th>education</th>
+      <th>marital-status</th>
+      <th>occupation</th>
+      <th>relationship</th>
+      <th>race</th>
+      <th>sex</th>
+      <th>native-country</th>
+      <th>education-num_na</th>
+      <th>age</th>
+      <th>fnlwgt</th>
+      <th>education-num</th>
+      <th>capital-gain</th>
+      <th>capital-loss</th>
+      <th>hours-per-week</th>
+      <th>salary</th>
+      <th>salary_pred</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>7.0</td>
+      <td>12.0</td>
+      <td>3.0</td>
+      <td>13.0</td>
+      <td>1.0</td>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>40.0</td>
+      <td>1.0</td>
+      <td>58.0</td>
+      <td>248841.0</td>
+      <td>9.0</td>
+      <td>15024.0</td>
+      <td>0.0</td>
+      <td>40.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>8.0</td>
+      <td>11.0</td>
+      <td>3.0</td>
+      <td>11.0</td>
+      <td>1.0</td>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>40.0</td>
+      <td>1.0</td>
+      <td>41.0</td>
+      <td>309056.0</td>
+      <td>16.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>50.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>5.0</td>
+      <td>5.0</td>
+      <td>7.0</td>
+      <td>9.0</td>
+      <td>3.0</td>
+      <td>2.0</td>
+      <td>1.0</td>
+      <td>31.0</td>
+      <td>1.0</td>
+      <td>63.0</td>
+      <td>106910.0</td>
+      <td>3.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>19.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1.0</td>
+      <td>11.0</td>
+      <td>3.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>40.0</td>
+      <td>1.0</td>
+      <td>72.0</td>
+      <td>118902.0</td>
+      <td>16.0</td>
+      <td>0.0</td>
+      <td>2392.0</td>
+      <td>6.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>5.0</td>
+      <td>7.0</td>
+      <td>3.0</td>
+      <td>3.0</td>
+      <td>1.0</td>
+      <td>40.0</td>
+      <td>1.0</td>
+      <td>41.0</td>
+      <td>155657.0</td>
+      <td>7.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>40.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>1.0</td>
+      <td>8.0</td>
+      <td>2.0</td>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>40.0</td>
+      <td>1.0</td>
+      <td>38.0</td>
+      <td>252250.0</td>
+      <td>7.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>65.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>5.0</td>
+      <td>16.0</td>
+      <td>5.0</td>
+      <td>15.0</td>
+      <td>5.0</td>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>40.0</td>
+      <td>1.0</td>
+      <td>29.0</td>
+      <td>277342.0</td>
+      <td>10.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>40.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>5.0</td>
+      <td>12.0</td>
+      <td>3.0</td>
+      <td>7.0</td>
+      <td>1.0</td>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>40.0</td>
+      <td>1.0</td>
+      <td>25.0</td>
+      <td>218667.0</td>
+      <td>9.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>40.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>7.0</td>
+      <td>10.0</td>
+      <td>1.0</td>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>40.0</td>
+      <td>1.0</td>
+      <td>54.0</td>
+      <td>154785.0</td>
+      <td>13.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>50.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Examine-the-structure-of-the-trained-model-structure">
+<a class="anchor" href="#Examine-the-structure-of-the-trained-model-structure" aria-hidden="true"><span class="octicon octicon-link"></span></a>Examine the structure of the trained model structure<a class="anchor-link" href="#Examine-the-structure-of-the-trained-model-structure"> </a>
+</h1>
+<p>Use the summary() function to see the structure of the trained model, including:</p>
+<ul>
+<li>the layers that make up the model</li>
+<li>total parameters</li>
+<li>loss function</li>
+<li>optimizer function</li>
+<li>callbacks</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+<style>
+    /* Turns off some styling */
+    progress {
+        /* gets rid of default border in Firefox and Opera. */
+        border: none;
+        /* Needs to be in here for Safari polyfill so background images work as expected. */
+        background-size: auto;
+    }
+    .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+        background: #F44336;
+    }
+</style>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>TabularModel (Input shape: 64 x 9)
+============================================================================
+Layer (type)         Output Shape         Param #    Trainable 
+============================================================================
+                     64 x 6              
+Embedding                                 60         True      
+____________________________________________________________________________
+                     64 x 8              
+Embedding                                 136        True      
+____________________________________________________________________________
+                     64 x 5              
+Embedding                                 40         True      
+____________________________________________________________________________
+                     64 x 8              
+Embedding                                 128        True      
+____________________________________________________________________________
+                     64 x 5              
+Embedding                                 35         True      
+____________________________________________________________________________
+                     64 x 4              
+Embedding                                 24         True      
+____________________________________________________________________________
+                     64 x 3              
+Embedding                                 9          True      
+____________________________________________________________________________
+                     64 x 13             
+Embedding                                 559        True      
+____________________________________________________________________________
+                     64 x 3              
+Embedding                                 9          True      
+Dropout                                                        
+BatchNorm1d                               12         True      
+____________________________________________________________________________
+                     64 x 200            
+Linear                                    12200      True      
+ReLU                                                           
+BatchNorm1d                               400        True      
+____________________________________________________________________________
+                     64 x 100            
+Linear                                    20000      True      
+ReLU                                                           
+BatchNorm1d                               200        True      
+____________________________________________________________________________
+                     64 x 2              
+Linear                                    202        True      
+____________________________________________________________________________
+
+Total params: 34,014
+Total trainable params: 34,014
+Total non-trainable params: 0
+
+Optimizer used: &lt;function Adam at 0x7f9f1e50d320&gt;
+Loss function: FlattenedLoss of CrossEntropyLoss()
+
+Model unfrozen
+
+Callbacks:
+  - TrainEvalCallback
+  - Recorder
+  - ProgressCallback</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">model</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>TabularModel(
+  (embeds): ModuleList(
+    (0): Embedding(10, 6)
+    (1): Embedding(17, 8)
+    (2): Embedding(8, 5)
+    (3): Embedding(16, 8)
+    (4): Embedding(7, 5)
+    (5): Embedding(6, 4)
+    (6): Embedding(3, 3)
+    (7): Embedding(43, 13)
+    (8): Embedding(3, 3)
+  )
+  (emb_drop): Dropout(p=0.0, inplace=False)
+  (bn_cont): BatchNorm1d(6, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (layers): Sequential(
+    (0): LinBnDrop(
+      (0): Linear(in_features=61, out_features=200, bias=False)
+      (1): ReLU(inplace=True)
+      (2): BatchNorm1d(200, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (1): LinBnDrop(
+      (0): Linear(in_features=200, out_features=100, bias=False)
+      (1): ReLU(inplace=True)
+      (2): BatchNorm1d(100, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    )
+    (2): LinBnDrop(
+      (0): Linear(in_features=100, out_features=2, bias=True)
+    )
+  )
+)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="leungadh/coding"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/coding/fastai/cookbook/tabular/2022/03/23/_03_24-CB-training_with_tabular_datasets.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/coding/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/coding/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/coding/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>My notebook for Data Science and Deep Learning</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/fastai" target="_blank" title="fastai"><svg class="svg-icon grey"><use xlink:href="/coding/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/fastdotai" target="_blank" title="fastdotai"><svg class="svg-icon grey"><use xlink:href="/coding/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
